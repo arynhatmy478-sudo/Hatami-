@@ -1,0 +1,26 @@
+name: Build APK
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: unzip -q ./*.zip -d project
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: 8.7 }
+      - run: gradle assembleRelease --no-daemon
+        working-directory: project
+      - run: cp project/app/build/outputs/apk/release/app-release.apk FocusForest.apk
+      - uses: actions/upload-artifact@v4
+        with: { name: FocusForest-apk, path: FocusForest.apk }
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Focus Forest build ${{ github.run_number }}
+          files: FocusForest.apk
